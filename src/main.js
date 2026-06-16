@@ -337,8 +337,7 @@ async function saveWord(event) {
     return
   }
 
-  const payload = {
-    user_id: getUserId(),
+  const wordPayload = {
     exam_category: 'TOEIC',
     course_id: courseId,
     word,
@@ -354,14 +353,17 @@ async function saveWord(event) {
     updated_at: new Date().toISOString()
   }
 
-  const result = state.editingWordId
-    ? await updateWordById(state.editingWordId, getUserId(), payload)
-    : await insertWord(payload)
+  const isEditing = Boolean(state.editingWordId)
+  const result = isEditing
+    ? await updateWordById(state.editingWordId, getUserId(), wordPayload)
+    : await insertWord({ user_id: getUserId(), ...wordPayload })
 
   if (result.error) {
     setMessage(result.error.message, 'error')
+  } else if (isEditing && Array.isArray(result.data) && result.data.length === 0) {
+    setMessage('没有找到可以修改的单词。请刷新数据后再试。', 'error')
   } else {
-    setMessage(state.editingWordId ? '单词已更新。' : '单词已保存。')
+    setMessage(isEditing ? '单词已更新。' : '单词已保存。')
     state.editingWordId = null
     state.activeTab = 'words'
     await loadAll()
