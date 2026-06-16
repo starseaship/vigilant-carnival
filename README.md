@@ -8,13 +8,19 @@
 
 ```text
 api/config.js              读取 Vercel 环境变量，返回给前端
-src/main.js                主功能逻辑
+index.html                 首页
+vercel.json                跳过 npm install 和 build
+
+src/main.js                应用入口、渲染分发、事件绑定
+src/api.js                 Supabase 数据读写
+src/constants.js           tab、掌握程度等固定配置
+src/practice.js            解释配对练习逻辑
+src/state.js               全局状态与消息状态
 src/supabaseClient.js      通过 CDN 加载 Supabase JS SDK
 src/speech.js              浏览器发音功能
 src/styles.css             页面样式
-supabase/vocabulary_schema.sql  数据库初始化 SQL
-index.html                 首页
-vercel.json                跳过 npm install 和 build
+src/utils.js               转义、标签、掌握程度、随机打乱等工具函数
+src/views.js               页面渲染模板
 ```
 
 ## Vercel 环境变量
@@ -30,11 +36,15 @@ VITE_SUPABASE_ANON_KEY
 
 ## Supabase
 
-在 Supabase SQL Editor 执行：
+需要在 Supabase 中准备以下表：
 
 ```text
-supabase/vocabulary_schema.sql
+courses
+vocabulary_items
+vocabulary_reviews
 ```
+
+这三个表都应该启用 RLS，并限制用户只能读写自己的 `user_id` 数据。
 
 ## GitHub 上传
 
