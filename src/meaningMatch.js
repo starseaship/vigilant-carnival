@@ -85,8 +85,21 @@ function renderMeaningPage() {
   if (!content) return
 
   updateMeaningTabState()
+  renderMeaningMessage()
   content.innerHTML = state.meaningPractice ? renderMeaningPracticeSession() : renderMeaningPracticeSetup()
   bindMeaningEvents(content)
+}
+
+function renderMeaningMessage() {
+  const el = document.querySelector('#message')
+  if (!el) return
+
+  if (!state.message) {
+    el.innerHTML = ''
+    return
+  }
+
+  el.innerHTML = `<div class="alert ${state.message.type === 'error' ? 'error' : ''}">${escapeHtml(state.message.text)}</div>`
 }
 
 function renderMeaningPracticeSetup() {
