@@ -7,7 +7,8 @@ export const state = {
   filters: {
     courseId: 'all',
     mastery: 'all',
-    search: ''
+    search: '',
+    page: '1'
   },
   practiceFilters: {
     courseId: 'all',
