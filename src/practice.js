@@ -33,13 +33,13 @@ export function createPracticeSession(courseId, count, tag = 'all') {
   return true
 }
 
-export async function submitMatchingAnswer(selectedId, userId) {
-  if (!state.practice || state.practice.lastResult) return
+export function submitMatchingAnswer(selectedId, userId) {
+  if (!state.practice || state.practice.lastResult) return null
 
   const question = state.practice.questions[state.practice.index]
   const selected = question.options.find(option => String(option.id) === String(selectedId))
   const isCorrect = String(selectedId) === String(question.word.id)
-  recordAnswer({ word: question.word, userAnswer: selected?.word || '', isCorrect, userId })
+  return recordAnswer({ word: question.word, userAnswer: selected?.word || '', isCorrect, userId })
 }
 
 export function nextQuestion() {
@@ -81,20 +81,23 @@ function recordAnswer({ word, userAnswer, isCorrect, userId }) {
   state.practice.lastResult = { word: updatedWord, userAnswer, isCorrect }
   state.words = state.words.map(item => String(item.id) === String(word.id) ? updatedWord : item)
 
-  saveMatchingReview({
+  return saveMatchingReview({
     reviewPayload,
     updatePayload,
     wordId: word.id,
     userId
   })
     .then(({ reviewResult, updateResult }) => {
-      if (reviewResult.error || updateResult.error) {
-        setMessage(reviewResult.error?.message || updateResult.error?.message, 'error')
-        return
+      const noUpdatedWord = Array.isArray(updateResult.data) && updateResult.data.length === 0
+      if (reviewResult.error || updateResult.error || noUpdatedWord) {
+        setMessage(reviewResult.error?.message || updateResult.error?.message || '没有找到可以更新的单词。请刷新数据后再试。', 'error')
+        return false
       }
       state.reviews.unshift(reviewPayload)
+      return true
     })
     .catch(error => {
       setMessage(error?.message || '保存练习记录失败，请检查网络后刷新重试。', 'error')
+      return false
     })
 }
