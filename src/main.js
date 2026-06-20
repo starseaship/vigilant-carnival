@@ -5,6 +5,7 @@ import { speak } from './speech.js'
 import { clearMessage, setMessage, state } from './state.js'
 import { hasSupabaseEnv, supabase } from './supabaseClient.js'
 import { clampMastery, parseTags } from './utils.js'
+import { renderWords } from './wordList.js'
 import {
   countWordsByCourse,
   renderCourses,
@@ -16,8 +17,7 @@ import {
   renderStats,
   renderTabs,
   renderUserPanel,
-  renderWordForm,
-  renderWords
+  renderWordForm
 } from './views.js'
 
 const app = document.querySelector('#app')
