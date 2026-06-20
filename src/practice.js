@@ -34,12 +34,12 @@ export function createPracticeSession(courseId, count, tag = 'all') {
 }
 
 export async function submitMatchingAnswer(selectedId, userId) {
-  if (!state.practice) return
+  if (!state.practice || state.practice.lastResult) return
 
   const question = state.practice.questions[state.practice.index]
   const selected = question.options.find(option => String(option.id) === String(selectedId))
   const isCorrect = String(selectedId) === String(question.word.id)
-  await recordAnswer({ word: question.word, userAnswer: selected?.word || '', isCorrect, userId })
+  recordAnswer({ word: question.word, userAnswer: selected?.word || '', isCorrect, userId })
 }
 
 export function nextQuestion() {
@@ -52,7 +52,7 @@ export function nextQuestion() {
   }
 }
 
-async function recordAnswer({ word, userAnswer, isCorrect, userId }) {
+function recordAnswer({ word, userAnswer, isCorrect, userId }) {
   const currentMastery = getMastery(word)
   const newMastery = isCorrect ? Math.min(currentMastery + 1, 3) : Math.max(currentMastery - 1, 0)
   const now = new Date().toISOString()
@@ -76,21 +76,25 @@ async function recordAnswer({ word, userAnswer, isCorrect, userId }) {
     updated_at: now
   }
 
-  const { reviewResult, updateResult } = await saveMatchingReview({
+  const updatedWord = { ...word, ...updatePayload }
+  state.practice.answers.push({ word: updatedWord, userAnswer, isCorrect })
+  state.practice.lastResult = { word: updatedWord, userAnswer, isCorrect }
+  state.words = state.words.map(item => String(item.id) === String(word.id) ? updatedWord : item)
+
+  saveMatchingReview({
     reviewPayload,
     updatePayload,
     wordId: word.id,
     userId
   })
-
-  if (reviewResult.error || updateResult.error) {
-    setMessage(reviewResult.error?.message || updateResult.error?.message, 'error')
-    return
-  }
-
-  const updatedWord = { ...word, ...updatePayload }
-  state.practice.answers.push({ word: updatedWord, userAnswer, isCorrect })
-  state.practice.lastResult = { word: updatedWord, userAnswer, isCorrect }
-  state.words = state.words.map(item => String(item.id) === String(word.id) ? updatedWord : item)
-  state.reviews.unshift(reviewPayload)
+    .then(({ reviewResult, updateResult }) => {
+      if (reviewResult.error || updateResult.error) {
+        setMessage(reviewResult.error?.message || updateResult.error?.message, 'error')
+        return
+      }
+      state.reviews.unshift(reviewPayload)
+    })
+    .catch(error => {
+      setMessage(error?.message || '保存练习记录失败，请检查网络后刷新重试。', 'error')
+    })
 }
