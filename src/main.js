@@ -171,14 +171,14 @@ function bindLoginEvents() {
 
 function bindTabEvents() {
   document.querySelectorAll('[data-filter]').forEach(input => {
-    input.addEventListener('input', () => {
-      state.filters[input.dataset.filter] = input.value
+    const updateFilter = () => {
+      const key = input.dataset.filter
+      state.filters[key] = input.value
+      if (key !== 'page') state.filters.page = '1'
       render()
-    })
-    input.addEventListener('change', () => {
-      state.filters[input.dataset.filter] = input.value
-      render()
-    })
+    }
+    const eventName = input.tagName === 'SELECT' ? 'change' : 'input'
+    input.addEventListener(eventName, updateFilter)
   })
 
   document.querySelectorAll('[data-practice-filter]').forEach(input => {
@@ -232,10 +232,29 @@ function bindTabEvents() {
     })
   })
 
-  document.querySelectorAll('[data-action="choose-option"]').forEach(button => {
-    button.addEventListener('click', async () => {
-      await submitMatchingAnswer(button.dataset.id, getUserId())
+  document.querySelectorAll('[data-action="prev-word-page"]').forEach(button => {
+    button.addEventListener('click', () => {
+      state.filters.page = String(Math.max(1, Number(state.filters.page || 1) - 1))
       render()
+    })
+  })
+
+  document.querySelectorAll('[data-action="next-word-page"]').forEach(button => {
+    button.addEventListener('click', () => {
+      state.filters.page = String(Number(state.filters.page || 1) + 1)
+      render()
+    })
+  })
+
+  document.querySelectorAll('[data-action="choose-option"]').forEach(button => {
+    button.addEventListener('click', () => {
+      const savePromise = submitMatchingAnswer(button.dataset.id, getUserId())
+      render()
+      if (savePromise && typeof savePromise.then === 'function') {
+        savePromise.then(saved => {
+          if (saved === false || state.message?.type === 'error') render()
+        })
+      }
     })
   })
 
